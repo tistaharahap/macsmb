@@ -1,0 +1,28 @@
+#!/usr/bin/env python
+
+import subprocess
+import os
+import sys
+
+MY_SSIDS = ['SSID1', 'SSID2']
+MOUNTS = ['share1', 'share2']
+SAMBA_SERVER = '192.168.1.1'
+
+CMD = "/System/Library/PrivateFrameworks/Apple80211.framework/Versions/Current/Resources/airport -I | awk '/ SSID/ {print substr($0, index($0, $2))}'"
+MOUNT_CMD = '/usr/bin/osascript -e \'mount volume "smb://Guest:@%s/%s"\''
+
+c = subprocess.Popen(CMD,
+                     shell=True,
+                     stdout=subprocess.PIPE,
+                     stderr=subprocess.STDOUT)
+CURRENT_SSID = c.communicate()[0].replace('\n', '')
+
+if not (CURRENT_SSID in MY_SSIDS):
+    sys.exit(0)
+
+for mount in MOUNTS:
+    if os.path.isdir('/Volumes/%s' % mount):
+        continue
+
+    c = subprocess.Popen(MOUNT_CMD % (SAMBA_SERVER, mount),
+                         shell=True)
